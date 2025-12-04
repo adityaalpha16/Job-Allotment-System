@@ -30,8 +30,6 @@ def login_view(request):
         
         user = authenticate(request, username=username, password=password)
         if password == 'password123':
-            # messages.warning(request, 'You are using the default password. Please change it after logging in.')
-            # login(request, user)
             messages.warning(request, 'Please change your password from the profile settings.')
             
         if user is not None:
@@ -39,6 +37,7 @@ def login_view(request):
                 messages.error(request, 'Account terminated. Please contact administrator.')
                 return render(request, 'login.html')
             login(request, user)
+            is_logged = True
             return redirect('dashboard')
         else:
             messages.error(request, 'Invalid username or password.')
