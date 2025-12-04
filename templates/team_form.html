@@ -24,10 +24,13 @@
                         <label class="form-label">Phone</label>
                         <input type="tel" name="phone" class="form-control" value="{{ target_user.phone|default:'' }}" placeholder="Enter phone number">
                     </div>
+                    {% if action == 'Edit' %}
                     <div class="mb-3">
                         <label class="form-label">Date of Joining</label>
                         <input type="tel" name="phone" class="form-control" value="{{ target_user.date_joined|default:'' }}" placeholder="date_joined" disabled>
                     </div>
+                    {% endif %}
+                    
                     {% if action == 'Create' %}
                     <!-- <div class="mb-3">
                         <label class="form-label">Date of Joining</label>
