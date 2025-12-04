@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}My Jobs - JobManage Pro{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="mb-1">My Jobs</h2>
+    <p class="text-muted mb-0">View and manage your assigned jobs</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-3">
+        <div class="kanban-column">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h6 class="mb-0">
+                    <span class="badge bg-warning me-2">{{ pending_jobs.count }}</span>
+                    Pending
+                </h6>
+            </div>
+            
+            {% for job in pending_jobs %}
+            <div class="card job-card mb-3">
+                <div class="card-body">
+                    <h6 class="card-title">{{ job.title }}</h6>
+                    <p class="card-text small text-muted">{{ job.description|truncatewords:15 }}</p>
+                    
+                    {% if job.due_date %}
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-calendar-fill me-2 text-muted"></i>
+                        <span class="small">{{ job.due_date }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post" action="{% url 'job_update_status' job.id %}" class="mt-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="status" value="IN_PROGRESS">
+                        <button type="submit" class="btn btn-sm btn-primary w-100">
+                            <i class="bi bi-play-fill me-1"></i>Start Working
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted text-center small">No pending jobs</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="col-lg-3">
+        <div class="kanban-column">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h6 class="mb-0">
+                    <span class="badge bg-info me-2">{{ in_progress_jobs.count }}</span>
+                    In Progress
+                </h6>
+            </div>
+            
+            {% for job in in_progress_jobs %}
+            <div class="card job-card mb-3">
+                <div class="card-body">
+                    <h6 class="card-title">{{ job.title }}</h6>
+                    <p class="card-text small text-muted">{{ job.description|truncatewords:15 }}</p>
+                    
+                    {% if job.due_date %}
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-calendar-fill me-2 text-muted"></i>
+                        <span class="small">{{ job.due_date }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post" action="{% url 'job_update_status' job.id %}" class="mt-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="status" value="SUBMITTED">
+                        <button type="submit" class="btn btn-sm btn-success w-100">
+                            <i class="bi bi-check-lg me-1"></i>Submit for Review
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted text-center small">No jobs in progress</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="col-lg-3">
+        <div class="kanban-column">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h6 class="mb-0">
+                    <span class="badge me-2" style="background-color: #a855f7 !important;">{{ submitted_jobs.count }}</span>
+                    Submitted
+                </h6>
+            </div>
+            
+            {% for job in submitted_jobs %}
+            <div class="card job-card mb-3">
+                <div class="card-body">
+                    <h6 class="card-title">{{ job.title }}</h6>
+                    <p class="card-text small text-muted">{{ job.description|truncatewords:15 }}</p>
+                    
+                    <div class="d-flex align-items-center mt-2">
+                        <i class="bi bi-hourglass-split me-2 text-warning"></i>
+                        <span class="small text-warning">Awaiting Verification</span>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted text-center small">No submitted jobs</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="col-lg-3">
+        <div class="kanban-column">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h6 class="mb-0">
+                    <span class="badge bg-success me-2">{{ verified_jobs.count }}</span>
+                    Completed
+                </h6>
+            </div>
+            
+            {% for job in verified_jobs %}
+            <div class="card job-card mb-3">
+                <div class="card-body">
+                    <h6 class="card-title">{{ job.title }}</h6>
+                    <p class="card-text small text-muted">{{ job.description|truncatewords:15 }}</p>
+                    
+                    <div class="d-flex align-items-center mt-2">
+                        <i class="bi bi-check-circle-fill me-2 text-success"></i>
+                        <span class="small text-success">Verified</span>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted text-center small">No completed jobs</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

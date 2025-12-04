@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ action }} User - JobManage Pro{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{{ action }} Team Member</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if action == 'Create' %}
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input type="text" name="username" class="form-control" placeholder="Enter username" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" name="password" class="form-control" placeholder="Enter password" required>
+                    </div>
+                    {% endif %}
+                    
+                    {% if can_edit_name %}
+                    <div class="mb-3">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" name="full_name" class="form-control" value="{{ target_user.full_name|default:'' }}" placeholder="Enter full name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Phone</label>
+                        <input type="tel" name="phone" class="form-control" value="{{ target_user.phone|default:'' }}" placeholder="Enter phone number">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Role</label>
+                        <select name="role" class="form-select">
+                            <option value="EMPLOYEE" {% if target_user.role == 'EMPLOYEE' %}selected{% endif %}>Employee</option>
+                            <option value="SUPERVISOR" {% if target_user.role == 'SUPERVISOR' %}selected{% endif %}>Supervisor</option>
+                            <option value="ADMIN" {% if target_user.role == 'ADMIN' %}selected{% endif %}>Admin</option>
+                        </select>
+                    </div>
+                    {% endif %}
+                    
+                    {% if can_edit_salary %}
+                    <div class="mb-3">
+                        <label class="form-label">Salary ($)</label>
+                        <input type="number" name="salary" class="form-control" value="{{ target_user.salary|floatformat:0 }}" step="1000" min="0">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Rating (1-5)</label>
+                        <select name="rating" class="form-select">
+                            {% for i in "12345" %}
+                            <option value="{{ forloop.counter }}" {% if target_user.rating == forloop.counter %}selected{% endif %}>
+                                {{ forloop.counter }} Star{% if forloop.counter > 1 %}s{% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-2"></i>{{ action }}
+                        </button>
+                        <a href="{% url 'team_management' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

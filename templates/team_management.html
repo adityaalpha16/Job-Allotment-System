@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}Team Management - JobManage Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">Team Management</h2>
+        <p class="text-muted mb-0">Manage your team members</p>
+    </div>
+    
+    {% if user.role == 'ADMIN' %}
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importModal">
+            <i class="bi bi-file-earmark-excel me-2"></i>Import Excel
+        </button>
+        <a href="{% url 'team_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i>Add User
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Phone</th>
+                    <th>Salary</th>
+                    <th>Rating</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for member in team_members %}
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                <i class="bi bi-person-fill text-white"></i>
+                            </div>
+                            <div>
+                                <div class="fw-medium">{{ member.full_name|default:member.username }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ member.username }}</td>
+                    <td>
+                        <span class="badge role-badge 
+                            {% if member.role == 'ADMIN' %}bg-warning text-dark
+                            {% elif member.role == 'SUPERVISOR' %}bg-info
+                            {% else %}bg-secondary
+                            {% endif %}">
+                            {{ member.get_role_display }}
+                        </span>
+                    </td>
+                    <td>{{ member.phone|default:'-' }}</td>
+                    <td>${{ member.salary|floatformat:0 }}</td>
+                    <td>
+                        <div class="star-rating">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= member.rating %}
+                                <i class="bi bi-star-fill"></i>
+                                {% else %}
+                                <i class="bi bi-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'team_edit' member.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            {% if user.role == 'ADMIN' and member.id != user.id %}
+                            <a href="{% url 'team_delete' member.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to remove this team member?')">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">No team members found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if user.role == 'ADMIN' %}
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Import Users from Excel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'team_import' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="text-muted">Upload an Excel file (.xlsx) with the following columns:</p>
+                    <ul class="text-muted small">
+                        <li>username</li>
+                        <li>fullName</li>
+                        <li>phone</li>
+                        <li>salary</li>
+                    </ul>
+                    <div class="mb-3">
+                        <input type="file" name="file" class="form-control" accept=".xlsx" required>
+                    </div>
+                    <p class="text-warning small">
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        Default password will be "password123" for imported users.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Import</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
