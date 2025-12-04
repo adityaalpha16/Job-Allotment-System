@@ -2,8 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
 from django.utils import timezone
+from django.db import transaction
 from django.db.models import Count, Avg, Q
 from .models import CustomUser, Job, UserRole, JobStatus
 import openpyxl
@@ -24,10 +25,14 @@ def login_view(request):
                 messages.error(request, 'Account terminated. Please contact administrator.')
                 return render(request, 'login.html')
         except CustomUser.DoesNotExist:
-            pass
+            messages.error(request, 'Invalid username or password.')
+            return render(request, 'login.html')
         
         user = authenticate(request, username=username, password=password)
         if user is not None:
+            if user.is_deleted:
+                messages.error(request, 'Account terminated. Please contact administrator.')
+                return render(request, 'login.html')
             login(request, user)
             return redirect('dashboard')
         else:
@@ -41,12 +46,20 @@ def signup_view(request):
         return redirect('dashboard')
     
     if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        confirm_password = request.POST.get('confirm_password')
-        full_name = request.POST.get('full_name')
-        phone = request.POST.get('phone', '')
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '')
+        confirm_password = request.POST.get('confirm_password', '')
+        full_name = request.POST.get('full_name', '').strip()
+        phone = request.POST.get('phone', '').strip()
         role = request.POST.get('role', UserRole.EMPLOYEE)
+        
+        if not username or not password or not full_name:
+            messages.error(request, 'Please fill in all required fields.')
+            return render(request, 'signup.html')
+        
+        if len(password) < 6:
+            messages.error(request, 'Password must be at least 6 characters.')
+            return render(request, 'signup.html')
         
         if password != confirm_password:
             messages.error(request, 'Passwords do not match.')
@@ -55,6 +68,9 @@ def signup_view(request):
         if CustomUser.objects.filter(username=username).exists():
             messages.error(request, 'Username already exists.')
             return render(request, 'signup.html')
+        
+        if role not in [UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.EMPLOYEE]:
+            role = UserRole.EMPLOYEE
         
         salary = 45000.00
         if role == UserRole.SUPERVISOR:
@@ -142,6 +158,7 @@ def job_board(request):
     user = request.user
     
     if user.role == UserRole.EMPLOYEE:
+        messages.error(request, 'Access denied.')
         return redirect('my_jobs')
     
     jobs = Job.objects.select_related('assigned_to', 'created_by').all()
@@ -189,14 +206,24 @@ def job_create(request):
         return redirect('my_jobs')
     
     if request.method == 'POST':
-        title = request.POST.get('title')
-        description = request.POST.get('description', '')
+        title = request.POST.get('title', '').strip()
+        description = request.POST.get('description', '').strip()
         assigned_to_id = request.POST.get('assigned_to')
         due_date = request.POST.get('due_date')
         
+        if not title:
+            messages.error(request, 'Job title is required.')
+            employees = CustomUser.objects.filter(role=UserRole.EMPLOYEE, is_deleted=False)
+            return render(request, 'job_form.html', {'employees': employees, 'action': 'Create'})
+        
         assigned_to = None
         if assigned_to_id:
-            assigned_to = get_object_or_404(CustomUser, id=assigned_to_id)
+            try:
+                assigned_to = CustomUser.objects.get(id=assigned_to_id, role=UserRole.EMPLOYEE, is_deleted=False)
+            except CustomUser.DoesNotExist:
+                messages.error(request, 'Invalid employee selected.')
+                employees = CustomUser.objects.filter(role=UserRole.EMPLOYEE, is_deleted=False)
+                return render(request, 'job_form.html', {'employees': employees, 'action': 'Create'})
         
         job = Job.objects.create(
             title=title,
@@ -215,20 +242,33 @@ def job_create(request):
 
 @login_required
 def job_edit(request, job_id):
-    job = get_object_or_404(Job, id=job_id)
-    
     if request.user.role == UserRole.EMPLOYEE:
         messages.error(request, 'You do not have permission to edit jobs.')
         return redirect('my_jobs')
     
+    job = get_object_or_404(Job, id=job_id)
+    
     if request.method == 'POST':
-        job.title = request.POST.get('title')
-        job.description = request.POST.get('description', '')
+        title = request.POST.get('title', '').strip()
+        description = request.POST.get('description', '').strip()
         assigned_to_id = request.POST.get('assigned_to')
         due_date = request.POST.get('due_date')
         
+        if not title:
+            messages.error(request, 'Job title is required.')
+            employees = CustomUser.objects.filter(role=UserRole.EMPLOYEE, is_deleted=False)
+            return render(request, 'job_form.html', {'job': job, 'employees': employees, 'action': 'Edit'})
+        
+        job.title = title
+        job.description = description
+        
         if assigned_to_id:
-            job.assigned_to = get_object_or_404(CustomUser, id=assigned_to_id)
+            try:
+                job.assigned_to = CustomUser.objects.get(id=assigned_to_id, role=UserRole.EMPLOYEE, is_deleted=False)
+            except CustomUser.DoesNotExist:
+                messages.error(request, 'Invalid employee selected.')
+                employees = CustomUser.objects.filter(role=UserRole.EMPLOYEE, is_deleted=False)
+                return render(request, 'job_form.html', {'job': job, 'employees': employees, 'action': 'Edit'})
         else:
             job.assigned_to = None
         
@@ -260,6 +300,10 @@ def job_update_status(request, job_id):
     
     if request.method == 'POST':
         new_status = request.POST.get('status')
+        
+        if new_status not in [JobStatus.PENDING, JobStatus.IN_PROGRESS, JobStatus.SUBMITTED, JobStatus.VERIFIED]:
+            messages.error(request, 'Invalid status.')
+            return redirect('job_board')
         
         if request.user.role == UserRole.EMPLOYEE:
             if job.assigned_to != request.user:
@@ -322,15 +366,22 @@ def team_create(request):
         return redirect('team_management')
     
     if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        full_name = request.POST.get('full_name')
-        phone = request.POST.get('phone', '')
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '')
+        full_name = request.POST.get('full_name', '').strip()
+        phone = request.POST.get('phone', '').strip()
         role = request.POST.get('role', UserRole.EMPLOYEE)
+        
+        if not username or not password or not full_name:
+            messages.error(request, 'Please fill in all required fields.')
+            return render(request, 'team_form.html', {'action': 'Create', 'can_edit_name': True})
         
         if CustomUser.objects.filter(username=username).exists():
             messages.error(request, 'Username already exists.')
-            return render(request, 'team_form.html', {'action': 'Create'})
+            return render(request, 'team_form.html', {'action': 'Create', 'can_edit_name': True})
+        
+        if role not in [UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.EMPLOYEE]:
+            role = UserRole.EMPLOYEE
         
         salary = 45000.00
         if role == UserRole.SUPERVISOR:
@@ -351,12 +402,12 @@ def team_create(request):
         messages.success(request, 'User created successfully!')
         return redirect('team_management')
     
-    return render(request, 'team_form.html', {'action': 'Create'})
+    return render(request, 'team_form.html', {'action': 'Create', 'can_edit_name': True})
 
 
 @login_required
 def team_edit(request, user_id):
-    target_user = get_object_or_404(CustomUser, id=user_id)
+    target_user = get_object_or_404(CustomUser, id=user_id, is_deleted=False)
     current_user = request.user
     
     if current_user.role == UserRole.EMPLOYEE:
@@ -370,19 +421,36 @@ def team_edit(request, user_id):
     
     if request.method == 'POST':
         if current_user.role == UserRole.ADMIN:
-            target_user.full_name = request.POST.get('full_name', target_user.full_name)
-            target_user.phone = request.POST.get('phone', target_user.phone)
+            full_name = request.POST.get('full_name', '').strip()
+            phone = request.POST.get('phone', '').strip()
             new_role = request.POST.get('role')
-            if new_role:
+            
+            if full_name:
+                target_user.full_name = full_name
+            target_user.phone = phone
+            
+            if new_role and new_role in [UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.EMPLOYEE]:
                 target_user.role = new_role
         
         if current_user.role == UserRole.SUPERVISOR:
             salary = request.POST.get('salary')
             rating = request.POST.get('rating')
+            
             if salary:
-                target_user.salary = float(salary)
+                try:
+                    salary_val = float(salary)
+                    if salary_val >= 0:
+                        target_user.salary = salary_val
+                except ValueError:
+                    pass
+            
             if rating:
-                target_user.rating = int(rating)
+                try:
+                    rating_val = int(rating)
+                    if 1 <= rating_val <= 5:
+                        target_user.rating = rating_val
+                except ValueError:
+                    pass
         
         target_user.save()
         messages.success(request, 'User updated successfully!')
@@ -405,6 +473,11 @@ def team_delete(request, user_id):
         return redirect('team_management')
     
     target_user = get_object_or_404(CustomUser, id=user_id)
+    
+    if target_user.id == request.user.id:
+        messages.error(request, 'You cannot delete yourself.')
+        return redirect('team_management')
+    
     target_user.is_deleted = True
     target_user.save()
     
@@ -418,7 +491,7 @@ def team_restore(request, user_id):
         messages.error(request, 'Only admins can restore users.')
         return redirect('team_management')
     
-    target_user = get_object_or_404(CustomUser, id=user_id)
+    target_user = get_object_or_404(CustomUser, id=user_id, is_deleted=True)
     target_user.is_deleted = False
     target_user.save()
     
@@ -450,28 +523,62 @@ def team_import(request):
         
         excel_file = request.FILES['file']
         
+        if not excel_file.name.endswith('.xlsx'):
+            messages.error(request, 'Please upload an Excel file (.xlsx).')
+            return redirect('team_management')
+        
+        if excel_file.size > 5 * 1024 * 1024:
+            messages.error(request, 'File size must be less than 5MB.')
+            return redirect('team_management')
+        
         try:
-            wb = openpyxl.load_workbook(excel_file)
-            ws = wb.active
-            
-            created_count = 0
-            for row in ws.iter_rows(min_row=2, values_only=True):
-                if len(row) >= 4:
-                    username, full_name, phone, salary = row[0], row[1], row[2], row[3]
-                    
-                    if username and not CustomUser.objects.filter(username=username).exists():
+            with transaction.atomic():
+                wb = openpyxl.load_workbook(excel_file)
+                ws = wb.active
+                
+                created_count = 0
+                errors = []
+                
+                for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    if len(row) >= 4:
+                        username = str(row[0]).strip() if row[0] else None
+                        full_name = str(row[1]).strip() if row[1] else ''
+                        phone = str(row[2]).strip() if row[2] else ''
+                        salary = row[3]
+                        
+                        if not username:
+                            continue
+                        
+                        if CustomUser.objects.filter(username=username).exists():
+                            errors.append(f'Row {row_num}: Username "{username}" already exists.')
+                            continue
+                        
+                        try:
+                            salary_val = float(salary) if salary else 45000.00
+                            if salary_val < 0:
+                                salary_val = 45000.00
+                        except (ValueError, TypeError):
+                            salary_val = 45000.00
+                        
                         CustomUser.objects.create_user(
                             username=username,
                             password='password123',
-                            full_name=full_name or '',
-                            phone=str(phone) if phone else '',
-                            salary=float(salary) if salary else 45000.00,
+                            full_name=full_name,
+                            phone=phone,
+                            salary=salary_val,
                             role=UserRole.EMPLOYEE,
                             rating=5
                         )
                         created_count += 1
-            
-            messages.success(request, f'Successfully imported {created_count} users.')
+                
+                if created_count > 0:
+                    messages.success(request, f'Successfully imported {created_count} users.')
+                if errors:
+                    for error in errors[:5]:
+                        messages.warning(request, error)
+                    if len(errors) > 5:
+                        messages.warning(request, f'...and {len(errors) - 5} more issues.')
+                        
         except Exception as e:
             messages.error(request, f'Error importing file: {str(e)}')
         
