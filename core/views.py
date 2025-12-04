@@ -29,6 +29,11 @@ def login_view(request):
             return render(request, 'login.html')
         
         user = authenticate(request, username=username, password=password)
+        if password == 'password123':
+            # messages.warning(request, 'You are using the default password. Please change it after logging in.')
+            # login(request, user)
+            messages.warning(request, 'Please change your password from the profile settings.')
+            
         if user is not None:
             if user.is_deleted:
                 messages.error(request, 'Account terminated. Please contact administrator.')
@@ -46,7 +51,7 @@ def signup_view(request):
         return redirect('dashboard')
     
     if request.method == 'POST':
-        username = request.POST.get('username', '').strip()
+        username = generateEmpId()
         password = request.POST.get('password', '')
         confirm_password = request.POST.get('confirm_password', '')
         full_name = request.POST.get('full_name', '').strip()
@@ -79,7 +84,7 @@ def signup_view(request):
             salary = 80000.00
         
         user = CustomUser.objects.create_user(
-            username=username,
+            username=generateEmpId(),
             password=password,
             full_name=full_name,
             phone=phone,
@@ -99,6 +104,13 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
+def generateEmpId():
+    last_user = CustomUser.objects.all().order_by('id').last()
+    if not last_user:
+        return 'EMP001'
+    user_id = last_user.id
+    new_id = 'EMP' + str(user_id + 1).zfill(3)
+    return new_id
 
 @login_required
 def dashboard(request):
@@ -366,8 +378,8 @@ def team_create(request):
         return redirect('team_management')
     
     if request.method == 'POST':
-        username = request.POST.get('username', '').strip()
-        password = request.POST.get('password', '')
+        username = generateEmpId()
+        password = 'password123'
         full_name = request.POST.get('full_name', '').strip()
         phone = request.POST.get('phone', '').strip()
         role = request.POST.get('role', UserRole.EMPLOYEE)
@@ -390,7 +402,7 @@ def team_create(request):
             salary = 80000.00
         
         CustomUser.objects.create_user(
-            username=username,
+            username=generateEmpId(),
             password=password,
             full_name=full_name,
             phone=phone,
@@ -561,7 +573,7 @@ def team_import(request):
                             salary_val = 45000.00
                         
                         CustomUser.objects.create_user(
-                            username=username,
+                            username=generateEmpId(),
                             password='password123',
                             full_name=full_name,
                             phone=phone,

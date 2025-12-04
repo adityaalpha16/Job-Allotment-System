@@ -1,4 +1,5 @@
 from django.urls import path
+from django.contrib.auth import views as auth_views
 from . import views
 
 urlpatterns = [
@@ -23,4 +24,7 @@ urlpatterns = [
     path('previous-contributors/', views.previous_contributors, name='previous_contributors'),
     
     path('api/dashboard-stats/', views.dashboard_stats_api, name='dashboard_stats_api'),
+    
+    path('password-change/', auth_views.PasswordChangeView.as_view(template_name='password_change.html'), name='password_change'),
+    path('password-change/done/', auth_views.PasswordChangeDoneView.as_view(template_name='password_change_done.html'), name='password_change_done'),
 ]

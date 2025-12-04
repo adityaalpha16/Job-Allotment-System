@@ -13,17 +13,6 @@
                 <form method="post">
                     {% csrf_token %}
                     
-                    {% if action == 'Create' %}
-                    <div class="mb-3">
-                        <label class="form-label">Username</label>
-                        <input type="text" name="username" class="form-control" placeholder="Enter username" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Password</label>
-                        <input type="password" name="password" class="form-control" placeholder="Enter password" required>
-                    </div>
-                    {% endif %}
                     
                     {% if can_edit_name %}
                     <div class="mb-3">
@@ -35,6 +24,17 @@
                         <label class="form-label">Phone</label>
                         <input type="tel" name="phone" class="form-control" value="{{ target_user.phone|default:'' }}" placeholder="Enter phone number">
                     </div>
+                    {% if action == 'Create' %}
+                    <!-- <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input type="text" name="username" class="form-control" placeholder="Enter username" required>
+                    </div> -->
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="text" name="password" class="form-control" placeholder="Enter password" disabled value="password123">
+                    </div>
+                    {% endif %}
                     
                     <div class="mb-3">
                         <label class="form-label">Role</label>

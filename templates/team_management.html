@@ -3,6 +3,13 @@
 {% block title %}Team Management - JobManage Pro{% endblock %}
 
 {% block content %}
+<style>
+    .btn[disabled], .btn[disabled]:hover, .btn[disabled]:focus {
+        cursor: not-allowed !important;
+        pointer-events: auto;
+    }
+</style>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 class="mb-1">Team Management</h2>
@@ -26,8 +33,8 @@
         <table class="table table-hover mb-0">
             <thead>
                 <tr>
+                    <th>EMP ID</th>
                     <th>Name</th>
-                    <th>Username</th>
                     <th>Role</th>
                     <th>Phone</th>
                     <th>Salary</th>
@@ -38,6 +45,7 @@
             <tbody>
                 {% for member in team_members %}
                 <tr>
+                    <td>{{ member.username }}</td>
                     <td>
                         <div class="d-flex align-items-center">
                             <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
@@ -48,7 +56,6 @@
                             </div>
                         </div>
                     </td>
-                    <td>{{ member.username }}</td>
                     <td>
                         <span class="badge role-badge 
                             {% if member.role == 'ADMIN' %}bg-warning text-dark
@@ -73,11 +80,17 @@
                     </td>
                     <td>
                         <div class="d-flex gap-2">
+                            {% if member.id != user.id and member.role != user.role %}
                             <a href="{% url 'team_edit' member.id %}" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-pencil"></i>
                             </a>
-                            {% if user.role == 'ADMIN' and member.id != user.id %}
-                            <a href="{% url 'team_delete' member.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to remove this team member?')">
+                            {% else %}
+                            <button class="btn btn-sm btn-outline-primary" disabled title="You cannot edit yourself">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            {% endif %}
+                            {% if user.role == 'ADMIN' and member.role != user.role %}
+                            <a href="{% url 'team_delete' member.id %}" class="btn btn-sm btn-outline-danger "style="" onclick="return confirm('Are you sure you want to remove this team member?')">
                                 <i class="bi bi-trash"></i>
                             </a>
                             {% endif %}
@@ -107,7 +120,7 @@
                 <div class="modal-body">
                     <p class="text-muted">Upload an Excel file (.xlsx) with the following columns:</p>
                     <ul class="text-muted small">
-                        <li>username</li>
+                        <li>EMP ID</li>
                         <li>fullName</li>
                         <li>phone</li>
                         <li>salary</li>
