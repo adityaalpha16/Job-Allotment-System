@@ -329,8 +329,12 @@ def job_update_status(request, job_id):
                 JobStatus.PENDING: [JobStatus.IN_PROGRESS],
                 JobStatus.IN_PROGRESS: [JobStatus.SUBMITTED],
             }
-            
-            if new_status not in valid_transitions.get(job.status, []):
+            # Allow employees to revert their own submitted jobs back to in-progress
+            if job.status == JobStatus.SUBMITTED and new_status == JobStatus.IN_PROGRESS:
+                if job.assigned_to != request.user:
+                    messages.error(request, 'You can only revert your own submitted jobs.')
+                    return redirect('my_jobs')
+            elif new_status not in valid_transitions.get(job.status, []):
                 messages.error(request, 'Invalid status transition.')
                 return redirect('my_jobs')
         

@@ -161,6 +161,13 @@
                                 <i class="bi bi-check-lg me-1"></i>Verify
                             </button>
                         </form>
+                        <form method="post" action="{% url 'job_update_status' job.id %}" class="flex-grow-1">
+                            {% csrf_token %}
+                            <input type="hidden" name="status" value="IN_PROGRESS">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary w-100">
+                                <i class="bi bi-arrow-left me-1"></i>Revert
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
