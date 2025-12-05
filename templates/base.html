@@ -169,6 +169,10 @@
         .main-wrapper {
           margin-left: 0;
         }
+        .sidebar {
+          top: 64px;
+          height: calc(100vh - 64px);
+        }
       }
 
       .user-dropdown {
@@ -185,10 +189,7 @@
     {% if user.is_authenticated %}
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <h4 class="mb-0 d-flex align-items-center">
-          <i class="bi bi-briefcase-fill text-primary me-2"></i>
-          Job Allotment System
-        </h4>
+        <h4 class="mb-0 d-flex align-items-center">Job Allotment System</h4>
       </div>
 
       <nav class="sidebar-nav">
