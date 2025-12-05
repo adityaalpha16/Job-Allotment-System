@@ -1,9 +1,5 @@
 # Job-Allotment-System
 
-```{=html}
-<p align="center">
-```
-`<img src="https://dummyimage.com/600x180/000/fff&text=Job+Allotment+System" alt="Project Logo" />`{=html}
 
 ## 🚀 Overview
 
