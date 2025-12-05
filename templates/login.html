@@ -3,19 +3,19 @@
 {% block title %}Login - JobManage Pro{% endblock %}
 
 {% block auth_content %}
-<div class="min-vh-100 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #000 0%, #18181b 100%);">
+<div class="min-vh-100 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, var(--bs-body-bg) 0%, var(--bs-card-bg) 100%);">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-5 col-lg-4">
                 <div class="text-center mb-4">
-                    <h1 class="text-white d-flex align-items-center justify-content-center gap-2">
+                    <h1 class="d-flex align-items-center justify-content-center gap-2" style="color: var(--bs-body-color);">
                         <i class="bi bi-briefcase-fill text-primary"></i>
                         Job Allotment System
                     </h1>
-                    <p class="text-muted">Sign in to your account</p>
+                    <p style="color: var(--bs-border-color);">Sign in to your account</p>
                 </div>
                 
-                <div class="card border-0 shadow-lg" style="background-color: #18181b;">
+                <div class="card border-0 shadow-lg">
                     <div class="card-body p-4">
                         {% if messages %}
                         {% for message in messages %}
@@ -29,13 +29,13 @@
                         <form method="post">
                             {% csrf_token %}
                             <div class="mb-3">
-                                <label class="form-label text-light">Employee ID</label>
-                                <input type="text" name="username" class="form-control bg-dark border-secondary text-light" placeholder="Enter employee id" required>
+                                <label class="form-label" style="color: var(--bs-body-color);">Employee ID</label>
+                                <input type="text" name="username" class="form-control" style="background-color: var(--bs-card-bg); border-color: var(--bs-border-color); color: var(--bs-body-color);" placeholder="Enter employee id" required>
                             </div>
                             
                             <div class="mb-4">
-                                <label class="form-label text-light">Password</label>
-                                <input type="password" name="password" class="form-control bg-dark border-secondary text-light" placeholder="Enter password" required>
+                                <label class="form-label" style="color: var(--bs-body-color);">Password</label>
+                                <input type="password" name="password" class="form-control" style="background-color: var(--bs-card-bg); border-color: var(--bs-border-color); color: var(--bs-body-color);" placeholder="Enter password" required>
                             </div>
                             
                             <button type="submit" class="btn btn-primary w-100 py-2">
