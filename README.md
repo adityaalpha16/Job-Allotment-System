@@ -4,23 +4,7 @@
 <p align="center">
 ```
 `<img src="https://dummyimage.com/600x180/000/fff&text=Job+Allotment+System" alt="Project Logo" />`{=html}
-```{=html}
-</p>
-```
-## 📛 Badges
 
-```{=html}
-<p align="center">
-```
-`<img src="https://img.shields.io/github/stars/adityaalpha16/Job-Allotment-System?style=for-the-badge" />`{=html}
-`<img src="https://img.shields.io/github/forks/adityaalpha16/Job-Allotment-System?style=for-the-badge" />`{=html}
-`<img src="https://img.shields.io/github/license/adityaalpha16/Job-Allotment-System?style=for-the-badge" />`{=html}
-`<img src="https://img.shields.io/github/issues/adityaalpha16/Job-Allotment-System?style=for-the-badge" />`{=html}
-`<img src="https://img.shields.io/badge/Python-3.x-blue?style=for-the-badge" />`{=html}
-`<img src="https://img.shields.io/github/last-commit/adityaalpha16/Job-Allotment-System?style=for-the-badge" />`{=html}
-```{=html}
-</p>
-```
 ## 🚀 Overview
 
 The **Job-Allotment-System** is a web-based platform designed to
@@ -67,6 +51,3 @@ python main.py
 
 Aditya --- GitHub: https://github.com/adityaalpha16
 
-## 📜 License
-
-MIT License
