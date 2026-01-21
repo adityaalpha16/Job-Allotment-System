@@ -1,3 +1,5 @@
+<img width="1438" height="804" alt="sc_job_allot" src="https://github.com/user-attachments/assets/2691bade-e570-4865-9da5-221169c9278d" />
+
 # Job-Allotment-System
 
 
